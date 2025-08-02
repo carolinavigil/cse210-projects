@@ -150,7 +150,7 @@ class ListingActivity : Activity
         Console.WriteLine("\nStart listing. Press Enter after each item.");
         Countdown(5);
 
-        int elapsed = 0;
+        
         int count = 0;
         DateTime endTime = DateTime.Now.AddSeconds(_duration);
         while (DateTime.Now < endTime)
