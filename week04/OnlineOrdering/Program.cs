@@ -5,12 +5,12 @@ class Program
     static void Main(string[] args)
     {
         // First order
-        Address address1 = new Address("123 Apple St", "New York", "NY", "USA");
-        Customer customer1 = new Customer("John Smith", address1);
+        Address address1 = new Address("1009 Main St", "huntington", "UTAH", "USA");
+        Customer customer1 = new Customer("Ricardo Mendoza", address1);
         Order order1 = new Order(customer1);
 
         order1.AddProduct(new Product("Laptop", "LPT123", 999.99m, 1));
-        order1.AddProduct(new Product("Mouse", "MSE456", 25.50m, 2));
+        order1.AddProduct(new Product("Phone", "MSE456", 25.50m, 2));
 
         DisplayOrder(order1);
 
