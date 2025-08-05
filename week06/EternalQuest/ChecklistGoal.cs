@@ -29,4 +29,7 @@ public class ChecklistGoal : Goal
     {
         return $"ChecklistGoal|{_name}|{_description}|{_points}|{_bonus}|{_targetCount}|{_currentCount}";
     }
+
+    public void LoadProgress(int count) => _currentCount = count;
 }
+

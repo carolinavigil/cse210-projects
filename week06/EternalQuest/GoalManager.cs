@@ -6,13 +6,16 @@ public class GoalManager
 {
     private List<Goal> _goals = new List<Goal>();
     private int _score = 0;
+    private int _level = 1;
+    private List<string> _badges = new List<string>();
+    private Random _random = new Random();
 
     public void Start()
     {
         string choice = "";
         while (choice != "6")
         {
-            Console.WriteLine($"\nYou have {_score} points.");
+            Console.WriteLine($"\nYou have {_score} points. Level {_level}");
             Console.WriteLine("Menu Options:");
             Console.WriteLine("1. Create New Goal");
             Console.WriteLine("2. List Goals");
@@ -75,6 +78,13 @@ public class GoalManager
         {
             Console.WriteLine($"{i + 1}. {_goals[i].GetDetailsString()}");
         }
+
+        if (_badges.Count > 0)
+        {
+            Console.WriteLine("\n🏅 Your Badges:");
+            foreach (var badge in _badges)
+                Console.WriteLine($"- {badge}");
+        }
     }
 
     private void SaveGoals()
@@ -84,6 +94,8 @@ public class GoalManager
         using (StreamWriter writer = new StreamWriter(filename))
         {
             writer.WriteLine(_score);
+            writer.WriteLine(_level);
+            writer.WriteLine(string.Join(",", _badges));
             foreach (Goal goal in _goals)
             {
                 writer.WriteLine(goal.GetStringRepresentation());
@@ -101,18 +113,19 @@ public class GoalManager
             _goals.Clear();
             string[] lines = File.ReadAllLines(filename);
             _score = int.Parse(lines[0]);
+            _level = int.Parse(lines[1]);
+            _badges = new List<string>(lines[2].Split(',', StringSplitOptions.RemoveEmptyEntries));
 
-            for (int i = 1; i < lines.Length; i++)
+            for (int i = 3; i < lines.Length; i++)
             {
                 string[] parts = lines[i].Split('|');
                 string type = parts[0];
 
                 if (type == "SimpleGoal")
                 {
-                    _goals.Add(new SimpleGoal(parts[1], parts[2], int.Parse(parts[3])) {
-                        // Restore completion state
-                        // Since _isComplete is private, you'd need to refactor or expose it via constructor
-                    });
+                    var goal = new SimpleGoal(parts[1], parts[2], int.Parse(parts[3]));
+                    goal.LoadState(bool.Parse(parts[4]));
+                    _goals.Add(goal);
                 }
                 else if (type == "EternalGoal")
                 {
@@ -120,13 +133,9 @@ public class GoalManager
                 }
                 else if (type == "ChecklistGoal")
                 {
-                    ChecklistGoal cg = new ChecklistGoal(parts[1], parts[2], int.Parse(parts[3]),
-                                                         int.Parse(parts[5]), int.Parse(parts[4]));
-                    // Current count set internally
-                    typeof(ChecklistGoal)
-                        .GetField("_currentCount", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                        .SetValue(cg, int.Parse(parts[6]));
-                    _goals.Add(cg);
+                    var goal = new ChecklistGoal(parts[1], parts[2], int.Parse(parts[3]), int.Parse(parts[5]), int.Parse(parts[4]));
+                    goal.LoadProgress(int.Parse(parts[6]));
+                    _goals.Add(goal);
                 }
             }
             Console.WriteLine("Goals loaded.");
@@ -142,11 +151,54 @@ public class GoalManager
         ListGoals();
         Console.Write("Which goal did you accomplish? ");
         int index = int.Parse(Console.ReadLine()) - 1;
+
         if (index >= 0 && index < _goals.Count)
         {
-            int points = _goals[index].RecordEvent();
-            Console.WriteLine($"You earned {points} points!");
-            _score += points;
+            Goal goal = _goals[index];
+            int earned = goal.RecordEvent();
+            _score += earned;
+
+            Console.WriteLine($"\n🎉 You earned {earned} points!");
+            ShowRandomMessage();
+
+            if (goal is SimpleGoal sg && sg.IsComplete() && !_badges.Contains("🏁 Finisher"))
+            {
+                _badges.Add("🏁 Finisher");
+                Console.WriteLine("🏅 You earned a new badge: Finisher!");
+            }
+            else if (goal is ChecklistGoal cg && cg.IsComplete() && !_badges.Contains("✅ Master of Habits"))
+            {
+                _badges.Add("✅ Master of Habits");
+                Console.WriteLine("🏅 You earned a new badge: Master of Habits!");
+            }
+
+            if (_score >= 5000 && !_badges.Contains("🌟 Quest Champion"))
+            {
+                _badges.Add("🌟 Quest Champion");
+                Console.WriteLine("🏆 You earned the ultimate badge: Quest Champion!");
+            }
+
+            int newLevel = (_score / 1000) + 1;
+            if (newLevel > _level)
+            {
+                _level = newLevel;
+                Console.WriteLine($"🆙 You leveled up to Level {_level}!");
+            }
         }
     }
+
+    private void ShowRandomMessage()
+    {
+        string[] messages = {
+            "Keep going! You're doing amazing!",
+            "Another step forward on your quest!",
+            "Great work! Stay consistent!",
+            "You’re building something eternal!",
+            "One day at a time. One point at a time."
+        };
+
+        Console.WriteLine("💬 " + messages[_random.Next(messages.Length)]);
+    }
 }
+
+

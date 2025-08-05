@@ -22,4 +22,7 @@ public class SimpleGoal : Goal
     {
         return $"SimpleGoal|{_name}|{_description}|{_points}|{_isComplete}";
     }
+
+    public void LoadState(bool isComplete) => _isComplete = isComplete;
 }
+
